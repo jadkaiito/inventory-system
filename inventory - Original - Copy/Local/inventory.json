@@ -1,0 +1,51 @@
+[
+  {
+    "reference": "2412251",
+    "barcode": "123",
+    "name": "TEST",
+    "quantity": 123124,
+    "price": 999
+  },
+  {
+    "reference": "2412252",
+    "barcode": "",
+    "name": "zertyuioplkjhgf",
+    "quantity": 123,
+    "price": 1
+  },
+  {
+    "reference": "2412263",
+    "barcode": "41144213",
+    "name": "Pringkes ",
+    "quantity": 1123,
+    "price": 1
+  },
+  {
+    "reference": "1735169697921-09203266",
+    "barcode": "09203266",
+    "name": "Pringkes ",
+    "quantity": 1,
+    "price": 1
+  },
+  {
+    "reference": "1735169767609-5053990107339",
+    "barcode": "5053990107339",
+    "name": "zertyuioplkjhgf",
+    "quantity": 1,
+    "price": 1
+  },
+  {
+    "reference": "1735170644490-2000003874194",
+    "barcode": "2000003874194",
+    "name": "jacket hme doudoune zippe AH24",
+    "quantity": 24,
+    "price": 1123456
+  },
+  {
+    "reference": "1735238812117- #%",
+    "barcode": " #%",
+    "name": "TEST",
+    "quantity": 8,
+    "price": 1
+  }
+]
