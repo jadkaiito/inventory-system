@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory System</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #1e1e1e; /* Dark background for better focus */
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    #addItemForm {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #addItemForm input, #addItemForm button {
+      padding: 10px;
+      font-size: 16px;
+      color: #333;
+    }
+    #addItemForm button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #addItemForm button:hover {
+      background-color: #0056b3;
+    }
+    #inventoryTable {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #inventoryTable th, #inventoryTable td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+      background-color: #333;
+      color: #fff;
+    }
+    #inventoryTable th {
+      background-color: #007bff;
+    }
+    #cameraModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black; /* Set modal background to black */
+      justify-content: center;
+      align-items: center;
+    }
+    #cameraModal.active {
+      display: flex;
+    }
+    #cameraContent {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    #video {
+      width: 320px;
+      height: 240px;
+      border: 5px solid #007bff; /* Proper border for the video */
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    #scannerTitle {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      color: #fff; /* White text for contrast against black background */
+    }
+    #closeModal {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      margin-top: 15px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #closeModal:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Inventory System</h1>
+  
+  <!-- Form to Add Items -->
+  <form id="addItemForm">
+    <input type="text" id="barcode" placeholder="Codebar" required readonly>
+    <input type="text" id="name" placeholder="Item Name" required>
+    <input type="number" id="quantity" placeholder="Quantity" required>
+    <input type="number" step="0.01" id="price" placeholder="Price" required>
+    <button type="button" id="startScanner">Scan Codebar</button>
+    <button type="submit">Add Item</button>
+  </form>
+
+  <!-- Inventory Display -->
+  <h2>Inventory</h2>
+  <table id="inventoryTable" border="1">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Codebar</th>
+        <th>Name</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Camera Modal for Barcode Scanning -->
+  <div id="cameraModal">
+    <div id="cameraContent">
+      <div id="scannerTitle">Barcode Scanner</div>
+      <video id="video" autoplay></video>
+      <button id="closeModal">Close Scanner</button>
+    </div>
+  </div>
+
+  <!-- Quagga JS and Barcode Sound -->
+  <script src="js/quagga.js"></script>
+  <script src="js/camera.js"></script>
+
+  <script>
+    // Set up the filename using localStorage
+    const fileName = localStorage.getItem("inventoryFileName") || "default_inventory.json";
+    localStorage.setItem("inventoryFileName", fileName);
+
+    // Fetch and display inventory
+    async function fetchInventory() {
+      try {
+        const response = await fetch(`/api/load/${fileName}`);
+        if (!response.ok) throw new Error("Failed to load inventory");
+
+        const inventory = await response.json();
+        const tbody = document.querySelector("#inventoryTable tbody");
+        tbody.innerHTML = ""; // Clear table
+        inventory.forEach((item, index) => {
+          const row = `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${item.barcode}</td>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>${item.price}</td>
+              <td><button onclick="deleteItem(${index})">Delete</button></td>
+            </tr>
+          `;
+          tbody.innerHTML += row;
+        });
+      } catch (error) {
+        console.error("Error loading inventory:", error);
+      }
+    }
+
+    // Save inventory to server
+    async function saveInventory(inventory) {
+      try {
+        const response = await fetch(`/api/save/${fileName}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(inventory),
+        });
+
+        if (!response.ok) throw new Error("Failed to save inventory");
+        alert("Inventory saved successfully!");
+      } catch (error) {
+        console.error("Error saving inventory:", error);
+      }
+    }
+
+    // Add item to inventory
+    document.getElementById("addItemForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const barcode = document.getElementById("barcode").value;
+      const name = document.getElementById("name").value;
+      const quantity = +document.getElementById("quantity").value;
+      const price = +document.getElementById("price").value;
+
+      const response = await fetch(`/api/load/${fileName}`);
+      const inventory = await response.json();
+      inventory.push({ barcode, name, quantity, price });
+
+      await saveInventory(inventory);
+      fetchInventory();
+    });
+
+    // Delete item from inventory
+    async function deleteItem(index) {
+      const response = await fetch(`/api/load/${fileName}`);
+      const inventory = await response.json();
+
+      inventory.splice(index, 1); // Remove item
+      await saveInventory(inventory);
+      fetchInventory();
+    }
+
+    // Initial load
+    fetchInventory();
+  </script>
+</body>
+</html>
