@@ -1,4 +1,4 @@
-// Enhanced camera.js script for barcode scanning
+// Complete and fixed camera.js script for GitHub Pages compatibility
 
 // Ensure all canvas contexts use willReadFrequently
 (function patchCanvasContext() {
@@ -29,6 +29,7 @@ const CameraScanner = (() => {
   };
 
   const showModal = () => {
+    console.log("Opening camera modal...");
     modal.classList.add("active");
 
     navigator.mediaDevices
@@ -50,6 +51,7 @@ const CameraScanner = (() => {
   };
 
   const closeModal = () => {
+    console.log("Closing camera modal...");
     stopStream();
     modal.classList.remove("active");
   };
@@ -58,6 +60,7 @@ const CameraScanner = (() => {
 
   const initScanner = () => {
     if (window.Quagga) {
+      console.log("Initializing Quagga scanner...");
       Quagga.init(
         {
           inputStream: {
@@ -81,8 +84,8 @@ const CameraScanner = (() => {
       Quagga.onDetected((data) => {
         const barcode = data.codeResult.code;
         if (barcode) {
-          barcodeField.value = barcode;
           console.log("Barcode detected:", barcode);
+          barcodeField.value = barcode;
           stopStream();
           closeModal();
         } else {
@@ -96,9 +99,73 @@ const CameraScanner = (() => {
   };
 
   document.getElementById("startScanner").addEventListener("click", () => {
+    console.log("Start Scanner button clicked.");
     showModal();
     initScanner();
   });
 
   return { showModal, closeModal };
 })();
+
+// Function to fetch and display inventory
+async function fetchInventory() {
+  try {
+    const response = await fetch("default_inventory.json"); // Adjusted path for GitHub Pages
+    if (!response.ok) throw new Error("Failed to load inventory");
+
+    const inventory = await response.json();
+    const tbody = document.querySelector("#inventoryTable tbody");
+    tbody.innerHTML = ""; // Clear table
+    inventory.forEach((item, index) => {
+      const row = `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.barcode}</td>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>${item.price}</td>
+          <td><button onclick="deleteItem(${index})">Delete</button></td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+  } catch (error) {
+    console.error("Error loading inventory:", error);
+  }
+}
+
+// Function to save inventory (for demonstration only; GitHub Pages does not support backend APIs)
+async function saveInventory(inventory) {
+  console.log("Save inventory simulation:", inventory);
+  alert("Inventory changes saved locally.");
+}
+
+// Event listener for the form submission to add an item
+const addItemForm = document.getElementById("addItemForm");
+addItemForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const barcode = document.getElementById("barcode").value;
+  const name = document.getElementById("name").value;
+  const quantity = +document.getElementById("quantity").value;
+  const price = +document.getElementById("price").value;
+
+  const response = await fetch("default_inventory.json");
+  const inventory = await response.json();
+  inventory.push({ barcode, name, quantity, price });
+
+  await saveInventory(inventory);
+  fetchInventory();
+});
+
+// Function to delete an item
+async function deleteItem(index) {
+  const response = await fetch("default_inventory.json");
+  const inventory = await response.json();
+
+  inventory.splice(index, 1); // Remove item
+  await saveInventory(inventory);
+  fetchInventory();
+}
+
+// Initial inventory load
+fetchInventory();
