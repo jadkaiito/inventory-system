@@ -1,3 +1,5 @@
+// Enhanced camera.js script for barcode scanning
+
 // Ensure all canvas contexts use willReadFrequently
 (function patchCanvasContext() {
   const originalGetContext = HTMLCanvasElement.prototype.getContext;
@@ -34,6 +36,12 @@ const CameraScanner = (() => {
       .then((mediaStream) => {
         stream = mediaStream;
         videoElement.srcObject = stream;
+        videoElement.play().catch((err) => {
+          console.error("Error playing video stream:", err);
+          alert("Unable to display the camera feed.");
+          stopStream();
+          closeModal();
+        });
       })
       .catch((error) => {
         console.error("Error accessing camera:", error);
@@ -72,13 +80,18 @@ const CameraScanner = (() => {
 
       Quagga.onDetected((data) => {
         const barcode = data.codeResult.code;
-        barcodeField.value = barcode;
-        console.log("Barcode detected:", barcode);
-        stopStream();
-        closeModal();
+        if (barcode) {
+          barcodeField.value = barcode;
+          console.log("Barcode detected:", barcode);
+          stopStream();
+          closeModal();
+        } else {
+          console.warn("No barcode detected.");
+        }
       });
     } else {
       console.error("Quagga.js not loaded.");
+      alert("Barcode scanner is unavailable. Please check your setup.");
     }
   };
 
