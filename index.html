@@ -262,6 +262,13 @@
             console.error("Error initializing Quagga:", err);
             return;
           }
+          // Mute the audio context
+          const audioContext = Quagga.AudioContext.getAudioContext();
+          if (audioContext) {
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0; // Mute the audio
+            gainNode.connect(audioContext.destination);
+          }
           Quagga.start();
         }
       );
