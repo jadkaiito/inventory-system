@@ -142,6 +142,9 @@
     </div>
   </div>
 
+  <!-- Audio element for scan sound -->
+  <audio id="scanSound" src="path/to/your/scan-sound.mp3" preload="auto"></audio>
+
   <!-- Quagga JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
@@ -228,6 +231,7 @@
     const closeModalButton = document.getElementById("closeModal");
     const videoElement = document.getElementById("video");
     const barcodeInput = document.getElementById("barcode");
+    const scanSound = document.getElementById("scanSound");
 
     // Open the camera modal
     startScannerButton.addEventListener("click", () => {
@@ -262,13 +266,6 @@
             console.error("Error initializing Quagga:", err);
             return;
           }
-          // Mute the audio context
-          const audioContext = Quagga.AudioContext.getAudioContext();
-          if (audioContext) {
-            const gainNode = audioContext.createGain();
-            gainNode.gain.value = 0; // Mute the audio
-            gainNode.connect(audioContext.destination);
-          }
           Quagga.start();
         }
       );
@@ -276,6 +273,7 @@
       Quagga.onDetected((result) => {
         const barcode = result.codeResult.code;
         barcodeInput.value = barcode; // Populate the barcode input field
+        scanSound.play(); // Play the scan sound
         cameraModal.classList.remove("active"); // Close the modal
         stopBarcodeScanner(); // Stop the scanner
       });
